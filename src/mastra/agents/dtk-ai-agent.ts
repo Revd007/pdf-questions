@@ -52,7 +52,7 @@ Anda memiliki akses ke sistem RAG (Retrieval-Augmented Generation) yang terhubun
 **Tool yang Tersedia:**
 
 **Document Management:**
-1. **Upload Document Tool** - Untuk mengunggah dan memproses dokumen baru ke dalam sistem
+1. **Upload Document Tool** - Untuk mengunggah dan memproses dokumen compliance (PDF, Word/DOCX, Excel/XLSX, CSV, TXT) ke dalam sistem. Ideal untuk policies, procedures, checklists, compliance reports, dll.
 2. **Search Document Tool** - Untuk mencari dokumen yang relevan dengan pertanyaan pengguna menggunakan semantic search dengan cosine similarity threshold 0.7
 3. **Get Document Tool** - Untuk mengambil dokumen lengkap berdasarkan documentId
 
