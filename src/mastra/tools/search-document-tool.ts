@@ -31,13 +31,17 @@ export const searchDocumentTool = createTool({
     try {
       console.log(`🔍 Mencari dokumen dengan query: "${query}"`);
       
+      // Ensure Qdrant collection exists before searching
+      const { ensureCollection } = await import('../lib/qdrant');
+      await ensureCollection();
+      
       const searchResults = await searchDocuments(query, limit);
 
       if (searchResults.length === 0) {
         return {
           results: [],
           totalResults: 0,
-          message: `Tidak ditemukan dokumen yang relevan dengan query "${query}" (threshold similarity: 0.7). Coba gunakan kata kunci yang lebih spesifik atau berbeda.`,
+          message: `Tidak ditemukan dokumen yang relevan dengan query "${query}" (threshold similarity: 0.7). Coba gunakan kata kunci yang lebih spesifik atau berbeda. Pastikan dokumen sudah di-upload ke sistem terlebih dahulu.`,
         };
       }
 
@@ -55,8 +59,16 @@ export const searchDocumentTool = createTool({
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
       console.error('❌ Error searching documents:', errorMessage);
-      throw new Error(`Gagal mencari dokumen: ${errorMessage}`);
+      console.error('Error stack:', errorStack);
+      
+      // Return helpful error message instead of throwing
+      return {
+        results: [],
+        totalResults: 0,
+        message: `Terjadi kesalahan saat mencari dokumen: ${errorMessage}. Pastikan Qdrant sudah berjalan dan koneksi ke database berfungsi dengan baik. Error details: ${errorStack || 'No stack trace available'}`,
+      };
     }
   },
 });
