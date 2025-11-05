@@ -1,9 +1,20 @@
-// @ts-ignore
-import PDFParser from 'pdf2json';
 import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
+
+// Dynamic import untuk pdf2json agar tidak di-bundle (menghindari CommonJS issues)
+// pdf2json menggunakan util.inherits yang tidak kompatibel dengan ES modules saat bundling
+let PDFParser: any = null;
+
+async function getPDFParser() {
+  if (!PDFParser) {
+    // @ts-ignore - Dynamic import untuk menghindari bundling issues
+    const pdf2jsonModule = await import('pdf2json');
+    PDFParser = pdf2jsonModule.default || pdf2jsonModule;
+  }
+  return PDFParser;
+}
 
 // Simple function to extract text from PDF using pure JavaScript
 export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<{ extractedText: string; pagesCount: number }> {
@@ -13,8 +24,11 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<{ extracted
 
   console.log('🔍 Extracting text from PDF...');
 
+  // Dynamic import PDFParser saat runtime
+  const PDFParserClass = await getPDFParser();
+
   return new Promise((resolve, reject) => {
-    const pdfParser = new PDFParser();
+    const pdfParser = new PDFParserClass();
 
     pdfParser.on('pdfParser_dataReady', (pdfData: any) => {
       try {

@@ -1,4 +1,4 @@
-import { mastra } from './src/mastra/index';
+import { mastra } from '../src/mastra/index';
 
 /**
  * Example penggunaan DTK AI Agent

@@ -22,11 +22,13 @@ import {
 // Memory configuration di-set melalui threadConfig
 
 // Initialize MCP tools - akan di-load saat agent digunakan
-// Menggunakan dynamic toolsets untuk MCP tools agar lebih fleksibel
+// Menggunakan lazy initialization untuk menghindari top-level await issues saat bundling
 let mcpToolsCache: Record<string, any> | null = null;
+let mcpToolsInitialized = false;
 
 async function initializeMcpTools(): Promise<Record<string, any>> {
-  if (!mcpToolsCache) {
+  if (!mcpToolsCache && !mcpToolsInitialized) {
+    mcpToolsInitialized = true;
     try {
       mcpToolsCache = await dtkMcpClient.getTools();
       console.log(`✅ MCP tools loaded: ${Object.keys(mcpToolsCache).length} tools available`);
@@ -35,11 +37,16 @@ async function initializeMcpTools(): Promise<Record<string, any>> {
       mcpToolsCache = {}; // Return empty object if MCP connection fails
     }
   }
-  return mcpToolsCache;
+  return mcpToolsCache || {};
 }
 
-// Initialize MCP tools in background
-initializeMcpTools().catch(console.error);
+// Initialize MCP tools in background (non-blocking)
+// Gunakan setTimeout untuk avoid blocking module initialization
+if (typeof setTimeout !== 'undefined') {
+  setTimeout(() => {
+    initializeMcpTools().catch(console.error);
+  }, 0);
+}
 
 export const dtkAiAgent = new Agent({
   name: 'DTK AI - ISO 27001 & PCI DSS Compliance Assistant',
