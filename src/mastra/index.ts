@@ -16,8 +16,9 @@ export const mastra = new Mastra({
     dtkAiAgent,
   },
   storage: new LibSQLStore({
-    // stores telemetry, evals, ... into memory storage, if it needs to persist, change to file:../mastra.db
-    url: ':memory:',
+    // stores telemetry, evals, memory, ... into persistent file storage
+    // Change to ':memory:' for in-memory only (not persistent)
+    url: process.env.MASTRA_DB_URL || 'file:./mastra.db',
   }),
   logger: new PinoLogger({
     name: 'Mastra',
