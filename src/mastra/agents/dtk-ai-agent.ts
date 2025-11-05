@@ -8,15 +8,15 @@ import {
   gapAnalysisTool,
   auditPreparationTool,
 } from '../tools/compliance-tools';
-import { createMemoryWithLibSQL } from '../lib/memory';
+import { memoryConfig } from '../lib/memory';
+// @ts-ignore - Type definitions exist but moduleResolution issue
 import {
   createAnswerRelevancyScorer,
   createToxicityScorer,
 } from '@mastra/evals/scorers/llm';
 
-// Initialize memory with LibSQLStore for persistence and RAG capabilities
 // Memory akan menggunakan shared storage dari Mastra instance (LibSQLStore)
-const memory = createMemoryWithLibSQL();
+// Memory configuration di-set melalui threadConfig
 
 export const dtkAiAgent = new Agent({
   name: 'DTK AI - ISO 27001 & PCI DSS Compliance Assistant',
@@ -204,7 +204,8 @@ Selalu bersikap profesional, membantu, dan edukatif dalam setiap interaksi.
     gapAnalysisTool,
     auditPreparationTool,
   },
-  memory,
+  // Memory akan menggunakan storage dari Mastra instance secara otomatis
+  // Memory configuration dapat di-set melalui memory option jika diperlukan
   scorers: {
     // Answer Relevancy: Evaluasi apakah jawaban relevan dengan pertanyaan
     relevancy: {

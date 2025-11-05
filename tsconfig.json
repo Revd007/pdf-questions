@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ES2022",
+    "module": "ESNext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -13,5 +13,16 @@
     "lib": ["ES2022"],
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "**/node_modules/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/dist/**",
+    "**/build/**"
+  ],
+  "ts-node": {
+    "esm": true
+  }
 }
