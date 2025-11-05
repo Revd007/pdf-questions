@@ -1,16 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
-import { LibSQLStore } from '@mastra/libsql';
-import { Memory } from '@mastra/memory';
 import { uploadDocumentTool } from '../tools/upload-document-tool';
 import { searchDocumentTool, getDocumentTool } from '../tools/search-document-tool';
-
-// Initialize memory with LibSQLStore for persistence
-const memory = new Memory({
-  storage: new LibSQLStore({
-    url: process.env.MASTRA_DB_URL || 'file:../mastra.db',
-  }),
-});
 
 export const dtkAiAgent = new Agent({
   name: 'DTK AI - ISO 27001 & PCI DSS Compliance Assistant',
@@ -109,6 +100,5 @@ Selalu bersikap profesional, membantu, dan edukatif dalam setiap interaksi.
     searchDocumentTool,
     getDocumentTool,
   },
-  memory,
 });
 
