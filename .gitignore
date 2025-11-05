@@ -4,5 +4,11 @@ dist
 .mastra
 .env.development
 .env
+.env.local
 *.db
 *.db-*
+*.db-journal
+outputs/
+uploads/
+*.log
+.DS_Store

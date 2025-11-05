@@ -7,7 +7,9 @@
     "dev": "mastra dev",
     "build": "mastra build",
     "start": "mastra start",
-    "seed": "bun run src/lib/seed"
+    "seed": "bun run src/lib/seed",
+    "test:dtk-ai": "tsx examples/dtk-ai-example.ts",
+    "setup": "npm install && docker run -d -p 6333:6333 -p 6334:6334 --name qdrant qdrant/qdrant || echo 'Qdrant container already exists or Docker not available'"
   },
   "keywords": [],
   "author": "",
@@ -38,6 +40,7 @@
     "@types/node": "^24.0.4",
     "bun": "^1.2.23",
     "mastra": "^0.6.3",
+    "tsx": "^4.20.6",
     "typescript": "^5.8.3"
   }
 }

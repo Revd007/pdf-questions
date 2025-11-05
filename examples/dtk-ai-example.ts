@@ -1,75 +1,121 @@
-import { mastra } from './src/mastra/index.js';
+import { mastra } from './src/mastra/index';
 
 /**
- * Contoh penggunaan DTK AI Agent untuk ISO 27001 & PCI DSS
+ * Example penggunaan DTK AI Agent
+ * 
+ * Jalankan dengan: npm run test:dtk-ai
+ * atau: npx tsx examples/dtk-ai-example.ts
  */
 
 async function main() {
-  console.log('🤖 DTK AI - ISO 27001 & PCI DSS Compliance Assistant');
-  console.log('Dibuat oleh PT Duta Teknologi Kreatif\n');
+  console.log('🚀 DTK AI Agent Example\n');
 
   const agent = mastra.getAgent('dtkAiAgent');
 
-  // Contoh 1: Upload dokumen
-  console.log('📤 Contoh 1: Upload Dokumen');
-  console.log('='.repeat(50));
+  // Example 1: Upload Document
+  console.log('📄 Example 1: Upload Document');
+  console.log('================================\n');
   
   try {
-    const uploadResult = await agent.generate([
+    const uploadResponse = await agent.generate([
       {
         role: 'user',
-        content: 'Upload dokumen ISO 27001 dari path: ./documents/iso27001.pdf dengan tipe pdf',
-      },
+        content: 'Upload dokumen ISO 27001 policy. File path: ./documents/iso27001-policy.pdf (jika ada)'
+      }
     ]);
-    
-    console.log('Hasil:', uploadResult.text);
+    console.log('Response:', uploadResponse.text);
+    console.log('\n');
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Note: File mungkin tidak ada, lanjut ke contoh berikutnya\n');
   }
 
+  // Example 2: Search Documents
+  console.log('🔍 Example 2: Search Documents');
+  console.log('================================\n');
+  
+  const searchResponse = await agent.generate([
+    {
+      role: 'user',
+      content: 'Cari dokumen tentang access control untuk ISO 27001'
+    }
+  ]);
+  console.log('Response:', searchResponse.text);
   console.log('\n');
 
-  // Contoh 2: Cari dokumen
-  console.log('🔍 Contoh 2: Cari Dokumen');
-  console.log('='.repeat(50));
+  // Example 3: Generate Word Document
+  console.log('📝 Example 3: Generate Word Document');
+  console.log('================================\n');
   
-  try {
-    const searchResult = await agent.generate([
-      {
-        role: 'user',
-        content: 'Saya butuh dokumen tentang access control untuk ISO 27001',
-      },
-    ]);
-    
-    console.log('Hasil:', searchResult.text);
-  } catch (error) {
-    console.error('Error:', error);
-  }
-
+  const wordResponse = await agent.generate([
+    {
+      role: 'user',
+      content: 'Buat laporan hardening Windows Server 2016 dengan standar CIS Benchmark terbaru menggunakan Word. Laporan harus mencakup executive summary, methodology, findings, dan recommendations.'
+    }
+  ]);
+  console.log('Response:', wordResponse.text);
   console.log('\n');
 
-  // Contoh 3: Query tentang PCI DSS
-  console.log('💳 Contoh 3: Query PCI DSS');
-  console.log('='.repeat(50));
+  // Example 4: Generate Excel Spreadsheet
+  console.log('📊 Example 4: Generate Excel Spreadsheet');
+  console.log('================================\n');
   
-  try {
-    const queryResult = await agent.generate([
-      {
-        role: 'user',
-        content: 'Apa saja requirement untuk encryption di PCI DSS? Berikan file yang relevan.',
-      },
-    ]);
-    
-    console.log('Hasil:', queryResult.text);
-  } catch (error) {
-    console.error('Error:', error);
+  const excelResponse = await agent.generate([
+    {
+      role: 'user',
+      content: 'Buat spreadsheet Excel untuk CIS Benchmark Windows Server 2016 dengan semua kontrol yang perlu dicek. Buat dengan multiple sheets untuk mengorganisir berdasarkan kategori kontrol.'
+    }
+  ]);
+  console.log('Response:', excelResponse.text);
+  console.log('\n');
+
+  // Example 5: Compliance Checklist
+  console.log('✅ Example 5: Compliance Checklist');
+  console.log('================================\n');
+  
+  const checklistResponse = await agent.generate([
+    {
+      role: 'user',
+      content: 'Tampilkan checklist compliance ISO 27001 untuk Access Control (A.9)'
+    }
+  ]);
+  console.log('Response:', checklistResponse.text);
+  console.log('\n');
+
+  // Example 6: Gap Analysis
+  console.log('🔎 Example 6: Gap Analysis');
+  console.log('================================\n');
+  
+  const gapResponse = await agent.generate([
+    {
+      role: 'user',
+      content: 'Lakukan gap analysis untuk PCI DSS compliance. Identifikasi area yang belum compliant dan berikan rekomendasi perbaikan.'
+    }
+  ]);
+  console.log('Response:', gapResponse.text);
+  console.log('\n');
+
+  // Example 7: Streaming Response
+  console.log('🌊 Example 7: Streaming Response');
+  console.log('================================\n');
+  
+  const stream = await agent.stream([
+    {
+      role: 'user',
+      content: 'Jelaskan tentang ISO 27001 Information Security Management System (ISMS) secara detail'
+    }
+  ]);
+
+  console.log('Streaming response:');
+  for await (const chunk of stream.textStream) {
+    process.stdout.write(chunk);
   }
+  console.log('\n\n');
+
+  console.log('✅ All examples completed!');
 }
 
-// Run jika file ini dijalankan langsung
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(console.error);
-}
-
-export { main };
-
+// Run main function
+main().catch((error) => {
+  console.error('❌ Error:', error);
+  process.exit(1);
+});

@@ -1,376 +1,341 @@
-# PDF to Questions Generator
+# DTK AI - ISO 27001 & PCI DSS Compliance Assistant
 
-A Mastra template that demonstrates **how to protect against token limits** by generating AI summaries from large datasets before passing as output from tool calls.
+AI Assistant yang dibuat oleh PT Duta Teknologi Kreatif untuk membantu persiapan sertifikasi ISO 27001 dan PCI DSS, serta bertindak sebagai pembimbing dan auditor virtual.
 
-> **🎯 Key Learning**: This template shows how to use large context window models (OpenAI GPT-4.1 Mini) as a "summarization layer" to compress large documents into focused summaries, enabling efficient downstream processing without hitting token limits.
+## 🎯 Fitur Utama
 
-## Overview
+### Document Management & RAG
+- ✅ **Upload Documents**: Support PDF, Word (DOCX), Excel (XLSX), CSV, TXT
+- ✅ **Semantic Search**: Pencarian dokumen menggunakan cosine similarity (threshold 0.7)
+- ✅ **Vector Database**: Menggunakan Qdrant untuk menyimpan dan mencari dokumen
+- ✅ **Enhanced Error Handling**: Pesan error yang informatif dan troubleshooting guidance
 
-This template showcases a crucial architectural pattern for working with large documents and LLMs:
+### Document Generation
+- ✅ **Generate Word Documents**: Membuat dokumen Word (DOCX) dengan struktur yang rapi
+- ✅ **Generate Excel Spreadsheets**: Membuat spreadsheet Excel (XLSX) dengan multiple sheets
+- ✅ **Professional Formatting**: Headings, tables, lists, auto-filter, frozen headers
 
-**🚨 The Problem**: Large PDFs can contain 50,000+ tokens, which would overwhelm context windows and cost thousands of tokens for processing.
+### Compliance & Audit Tools
+- ✅ **Compliance Checklist**: Checklist requirements untuk ISO 27001 & PCI DSS
+- ✅ **Deadline Reminder**: Tracking deadline dan timeline audit
+- ✅ **Gap Analysis**: Identifikasi area yang belum compliant beserta rekomendasi
+- ✅ **Audit Preparation**: Checklist dan guidance untuk persiapan audit
 
-**✅ The Solution**: Use a large context window model (OpenAI GPT-4.1 Mini) to generate focused summaries, then use those summaries for downstream processing.
+### MCP Integration
+- ✅ **MCP Client**: Terhubung ke MCP servers (Mastra Docs Server, dll)
+- ✅ **Extensible**: Mudah menambahkan MCP servers lain
 
-### Workflow
+### Memory & Context
+- ✅ **LibSQLStore**: Persistent memory storage
+- ✅ **Semantic Recall**: Mencari konteks relevan dari percakapan sebelumnya
+- ✅ **Working Memory**: Tracking progress audit dan action items
 
-1. **Input**: PDF URL
-2. **Download & Summarize**: Fetch PDF, extract text, and generate AI summary using OpenAI GPT-4.1 Mini
-3. **Generate Questions**: Create focused questions from the summary (not the full text)
+### Quality Evaluation
+- ✅ **Answer Relevancy Scorer**: Evaluasi relevansi jawaban
+- ✅ **Toxicity Scorer**: Safety check untuk konten
 
-### Key Benefits
+## 🚀 Quick Start
 
-- **📉 Token Reduction**: 80-95% reduction in token usage
-- **🎯 Better Quality**: More focused questions from key insights
-- **💰 Cost Savings**: Dramatically reduced processing costs
-- **⚡ Faster Processing**: Summaries are much faster to process than full text
+### 1. Prerequisites
 
-## Prerequisites
+- Node.js 20.9.0 atau lebih tinggi
+- Docker (untuk Qdrant Vector Database)
+- OpenAI API Key
 
-- Node.js 20.9.0 or higher
-- OpenAI API key (for both summarization and question generation)
+### 2. Installation
 
-## Setup
+```bash
+# Clone repository
+git clone <repository-url>
+cd pdf-questions
 
-1. **Clone and install dependencies:**
+# Install dependencies
+npm install
 
-   ```bash
-   git clone <repository-url>
-   cd template-pdf-questions
-   pnpm install
-   ```
-
-2. **Set up environment variables:**
-
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your API keys
-   ```
-
-   ```env
-   OPENAI_API_KEY="your-openai-api-key-here"
-   ```
-
-3. **Run the example:**
-
-   ```bash
-   npx tsx example.ts
-   ```
-
-## 🏗️ Architectural Pattern: Token Limit Protection
-
-This template demonstrates a crucial pattern for working with large datasets in LLM applications:
-
-### The Challenge
-
-When processing large documents (PDFs, reports, transcripts), you often encounter:
-
-- **Token limits**: Documents can exceed context windows
-- **High costs**: Processing 50,000+ tokens repeatedly is expensive
-- **Poor quality**: LLMs perform worse on extremely long inputs
-- **Slow processing**: Large inputs take longer to process
-
-### The Solution: Summarization Layer
-
-Instead of passing raw data through your pipeline:
-
-1. **Use a large context window model** (OpenAI GPT-4.1 Mini) to digest the full content
-2. **Generate focused summaries** that capture key information
-3. **Pass summaries to downstream processing** instead of raw data
-
-### Implementation Details
-
-```typescript
-// ❌ BAD: Pass full text through pipeline
-const questions = await generateQuestions(fullPdfText); // 50,000 tokens!
-
-// ✅ GOOD: Summarize first, then process
-const summary = await summarizeWithGPT41Mini(fullPdfText); // 2,000 tokens
-const questions = await generateQuestions(summary); // Much better!
+# Setup environment variables
+cp .env.example .env
+# Edit .env dan tambahkan OPENAI_API_KEY
 ```
 
-### When to Use This Pattern
+### 3. Setup Qdrant Vector Database
 
-- **Large documents**: PDFs, reports, transcripts
-- **Batch processing**: Multiple documents
-- **Cost optimization**: Reduce token usage
-- **Quality improvement**: More focused processing
-- **Chain operations**: Multiple LLM calls on same data
+```bash
+# Run Qdrant menggunakan Docker
+docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant
 
-## Usage
+# Atau gunakan Qdrant Cloud
+# Set QDRANT_URL dan QDRANT_API_KEY di .env
+```
 
-### Using the Workflow
+### 4. Run Development Server
+
+```bash
+npm run dev
+```
+
+### 5. Test DTK AI Agent
+
+```bash
+# Lihat examples/dtk-ai-example.ts untuk contoh penggunaan
+npm run test:dtk-ai
+```
+
+## 📋 Environment Variables
+
+Lihat `.env.example` untuk semua environment variables yang diperlukan:
+
+- `OPENAI_API_KEY` - **Required**: OpenAI API key
+- `QDRANT_URL` - Default: `http://localhost:6333`
+- `QDRANT_API_KEY` - Optional: Untuk Qdrant Cloud
+- `MASTRA_DB_URL` - Default: `file:./mastra.db`
+- `OUTPUT_DIR` - Default: `./outputs`
+- `UPLOAD_DIR` - Default: `./uploads`
+
+## 💡 Usage Examples
+
+### Upload Document
 
 ```typescript
 import { mastra } from './src/mastra/index';
 
-const run = await mastra.getWorkflow('pdfToQuestionsWorkflow').createRunAsync();
+const agent = mastra.getAgent('dtkAiAgent');
 
-// Using a PDF URL
-const result = await run.start({
-  inputData: {
-    pdfUrl: 'https://example.com/document.pdf',
-  },
-});
-
-console.log(result.result.questions);
-```
-
-### Using the PDF Questions Agent
-
-```typescript
-import { mastra } from './src/mastra/index';
-
-const agent = mastra.getAgent('pdfQuestionsAgent');
-
-// The agent can handle the full process with natural language
-const response = await agent.stream([
+const response = await agent.generate([
   {
     role: 'user',
-    content: 'Please download this PDF and generate questions from it: https://example.com/document.pdf',
-  },
+    content: 'Upload dokumen ISO 27001 policy dari file: ./documents/iso27001-policy.pdf'
+  }
+]);
+```
+
+### Search Documents
+
+```typescript
+const response = await agent.generate([
+  {
+    role: 'user',
+    content: 'Cari dokumen tentang access control untuk ISO 27001'
+  }
+]);
+```
+
+### Generate Word Document
+
+```typescript
+const response = await agent.generate([
+  {
+    role: 'user',
+    content: 'Buat laporan hardening Windows Server 2016 dengan standar CIS Benchmark terbaru menggunakan Word'
+  }
 ]);
 
-for await (const chunk of response.textStream) {
-  console.log(chunk);
-}
+// Agent akan:
+// 1. Mencari dokumen CIS Benchmark terkait
+// 2. Membuat dokumen Word dengan struktur yang rapi
+// 3. Memberikan filePath ke dokumen yang dibuat
 ```
 
-### Using Individual Tools
+### Generate Excel Spreadsheet
 
 ```typescript
-import { mastra } from './src/mastra/index';
-import { pdfFetcherTool } from './src/mastra/tools/download-pdf-tool';
-import { generateQuestionsFromTextTool } from './src/mastra/tools/generate-questions-from-text-tool';
-
-// Step 1: Download PDF and generate summary
-const pdfResult = await pdfFetcherTool.execute({
-  context: { pdfUrl: 'https://example.com/document.pdf' },
-  mastra,
-  runtimeContext: new RuntimeContext(),
-});
-
-console.log(`Downloaded ${pdfResult.fileSize} bytes from ${pdfResult.pagesCount} pages`);
-console.log(`Generated ${pdfResult.summary.length} character summary`);
-
-// Step 2: Generate questions from summary
-const questionsResult = await generateQuestionsFromTextTool.execute({
-  context: {
-    extractedText: pdfResult.summary,
-    maxQuestions: 10,
-  },
-  mastra,
-  runtimeContext: new RuntimeContext(),
-});
-
-console.log(questionsResult.questions);
-```
-
-### Expected Output
-
-```javascript
-{
-  status: 'success',
-  result: {
-    questions: [
-      "What is the main objective of the research presented in this paper?",
-      "Which methodology was used to collect the data?",
-      "What are the key findings of the study?",
-      // ... more questions
-    ],
-    success: true
+const response = await agent.generate([
+  {
+    role: 'user',
+    content: 'Buat spreadsheet Excel untuk CIS Benchmark Windows Server 2016 dengan semua kontrol yang perlu dicek'
   }
-}
+]);
+
+// Agent akan:
+// 1. Menggunakan Compliance Checklist Tool untuk mendapatkan controls
+// 2. Membuat spreadsheet Excel dengan multiple sheets
+// 3. Memberikan filePath ke spreadsheet yang dibuat
 ```
 
-## Architecture
-
-### Components
-
-- **`pdfToQuestionsWorkflow`**: Main workflow orchestrating the process
-- **`textQuestionAgent`**: Mastra agent specialized in generating educational questions
-- **`pdfQuestionAgent`**: Complete agent that can handle the full PDF to questions pipeline
-
-### Tools
-
-- **`pdfFetcherTool`**: Downloads PDF files from URLs, extracts text, and generates AI summaries
-- **`generateQuestionsFromTextTool`**: Generates comprehensive questions from summarized content
-
-### Workflow Steps
-
-1. **`download-and-summarize-pdf`**: Downloads PDF from provided URL and generates AI summary
-2. **`generate-questions-from-summary`**: Creates comprehensive questions from the AI summary
-
-## Features
-
-- ✅ **Token Limit Protection**: Demonstrates how to handle large datasets without hitting context limits
-- ✅ **80-95% Token Reduction**: AI summarization drastically reduces processing costs
-- ✅ **Large Context Window**: Uses OpenAI GPT-4.1 Mini to handle large documents efficiently
-- ✅ **Zero System Dependencies**: Pure JavaScript solution
-- ✅ **Single API Setup**: OpenAI for both summarization and question generation
-- ✅ **Fast Text Extraction**: Direct PDF parsing (no OCR needed for text-based PDFs)
-- ✅ **Educational Focus**: Generates focused learning questions from key insights
-- ✅ **Multiple Interfaces**: Workflow, Agent, and individual tools available
-
-## How It Works
-
-### Text Extraction Strategy
-
-This template uses a **pure JavaScript approach** that works for most PDFs:
-
-1. **Text-based PDFs** (90% of cases): Direct text extraction using `pdf2json`
-   - ⚡ Fast and reliable
-   - 🔧 No system dependencies
-   - ✅ Works out of the box
-
-2. **Scanned PDFs**: Would require OCR, but most PDFs today contain embedded text
-
-### Why This Approach?
-
-- **Simplicity**: No GraphicsMagick, ImageMagick, or other system tools needed
-- **Speed**: Direct text extraction is much faster than OCR
-- **Reliability**: Works consistently across different environments
-- **Educational**: Easy for developers to understand and modify
-- **Single Path**: One clear workflow with no complex branching
-
-## Configuration
-
-### Environment Variables
-
-```bash
-OPENAI_API_KEY=your_openai_api_key_here
-```
-
-### Customization
-
-You can customize the question generation by modifying the `textQuestionAgent`:
+### Compliance Checklist
 
 ```typescript
-export const textQuestionAgent = new Agent({
-  name: 'Generate questions from text agent',
-  instructions: `
-    You are an expert educational content creator...
-    // Customize instructions here
-  `,
-  model: openai('gpt-4o'),
-});
+const response = await agent.generate([
+  {
+    role: 'user',
+    content: 'Tampilkan checklist compliance ISO 27001 untuk Access Control'
+  }
+]);
 ```
 
-## Development
+### Gap Analysis
 
-### Project Structure
+```typescript
+const response = await agent.generate([
+  {
+    role: 'user',
+    content: 'Lakukan gap analysis untuk PCI DSS compliance berdasarkan dokumen yang sudah diupload'
+  }
+]);
+```
 
-```text
+## 🏗️ Architecture
+
+```
+DTK AI Agent
+├── Document Management Tools
+│   ├── Upload Document Tool
+│   ├── Search Document Tool
+│   ├── Get Document Tool
+│   ├── Generate Word Document Tool
+│   └── Generate Excel Spreadsheet Tool
+├── Compliance & Audit Tools
+│   ├── Compliance Checklist Tool
+│   ├── Deadline Reminder Tool
+│   ├── Gap Analysis Tool
+│   └── Audit Preparation Tool
+├── MCP Tools
+│   └── Mastra MCP Docs Server
+├── RAG System
+│   ├── Qdrant Vector Database
+│   ├── OpenAI Embeddings
+│   └── Cosine Similarity Search
+├── Memory System
+│   ├── LibSQLStore (Persistent)
+│   ├── Semantic Recall
+│   └── Working Memory
+└── Quality Evaluation
+    ├── Answer Relevancy Scorer
+    └── Toxicity Scorer
+```
+
+## 📁 Project Structure
+
+```
 src/mastra/
 ├── agents/
-│   ├── pdf-question-agent.ts       # PDF processing and question generation agent
-│   └── text-question-agent.ts      # Text to questions generation agent
+│   ├── dtk-ai-agent.ts          # Main DTK AI Agent
+│   ├── pdf-question-agent.ts    # PDF processing agent
+│   ├── pdf-summarization-agent.ts
+│   └── text-question-agent.ts
 ├── tools/
-│   ├── download-pdf-tool.ts         # PDF download tool
-│   ├── extract-text-from-pdf-tool.ts # PDF text extraction tool
-│   └── generate-questions-from-text-tool.ts # Question generation tool
-├── workflows/
-│   └── generate-questions-from-pdf-workflow.ts # Main workflow
+│   ├── upload-document-tool.ts
+│   ├── search-document-tool.ts
+│   ├── generate-word-document-tool.ts
+│   ├── generate-excel-spreadsheet-tool.ts
+│   ├── compliance-tools.ts
+│   └── ...
+├── mcp/
+│   └── mcp-client.ts            # MCP Client configuration
 ├── lib/
-│   └── util.ts                      # Utility functions including PDF text extraction
-└── index.ts                         # Mastra configuration
+│   ├── qdrant.ts                # Qdrant utilities
+│   ├── util.ts                  # Text extraction utilities
+│   └── memory.ts                # Memory configuration
+├── workflows/
+│   └── generate-questions-from-pdf-workflow.ts
+└── index.ts                      # Mastra configuration
 ```
 
-### Testing
+## 🔧 Development
+
+### Scripts
 
 ```bash
-# Run with a test PDF
-export OPENAI_API_KEY="your-api-key"
-npx tsx example.ts
+# Development server
+npm run dev
+
+# Build
+npm run build
+
+# Start production
+npm run start
+
+# Run examples
+npm run test:dtk-ai
 ```
 
-## Common Issues
+### Adding New MCP Servers
 
-### "OPENAI_API_KEY is not set"
+Edit `src/mastra/mcp/mcp-client.ts`:
 
-- Make sure you've set the environment variable
-- Check that your API key is valid and has sufficient credits
+```typescript
+export const dtkMcpClient = new MCPClient({
+  id: 'dtk-mcp-client',
+  servers: {
+    mastra: {
+      command: 'npx',
+      args: ['-y', '@mastra/mcp-docs-server'],
+    },
+    // Tambahkan server lain di sini
+    wikipedia: {
+      command: 'npx',
+      args: ['-y', 'wikipedia-mcp'],
+    },
+  },
+});
+```
 
-### "Failed to download PDF"
+## 📖 Documentation
 
-- Verify the PDF URL is accessible and publicly available
-- Check network connectivity
-- Ensure the URL points to a valid PDF file
-- Some servers may require authentication or have restrictions
+- [Enhanced RAG & Word Generation](./ENHANCED_RAG_AND_WORD_GENERATION.md)
+- [MCP & Excel Support](./MCP_AND_EXCEL_SUPPORT.md)
+- [Complete Features Guide](./COMPLETE_FEATURES_GUIDE.md)
 
-### "No text could be extracted"
+## 🐛 Troubleshooting
 
-- The PDF might be password-protected
-- Very large PDFs might take longer to process
-- Scanned PDFs without embedded text won't work (rare with modern PDFs)
+### Qdrant Connection Error
 
-### "Context length exceeded" or Token Limit Errors
+```bash
+# Pastikan Qdrant berjalan
+docker ps | grep qdrant
 
-- **Solution**: Use a smaller PDF file (under ~5-10 pages)
-- **Automatic Truncation**: The tool automatically uses only the first 4000 characters for very large documents
-- **Helpful Errors**: Clear messages guide you to use smaller PDFs when needed
+# Jika tidak, start Qdrant
+docker run -p 6333:6333 qdrant/qdrant
 
-## What Makes This Template Special
+# Check connection
+curl http://localhost:6333/health
+```
 
-### 🎯 **True Simplicity**
+### MCP Tools Not Loading
 
-- Single dependency for PDF processing (`pdf2json`)
-- No system tools or complex setup required
-- Works immediately after `pnpm install`
-- Multiple usage patterns (workflow, agent, tools)
+- Pastikan `npx` tersedia di system
+- Check console untuk error messages
+- Agent akan tetap berfungsi tanpa MCP tools
 
-### ⚡ **Performance**
+### Document Upload Fails
 
-- Direct text extraction (no image conversion)
-- Much faster than OCR-based approaches
-- Handles reasonably-sized documents efficiently
+- Pastikan file path benar
+- Check file permissions
+- Pastikan `UPLOAD_DIR` writable
 
-### 🔧 **Developer-Friendly**
+### Word/Excel Generation Fails
 
-- Pure JavaScript/TypeScript
-- Easy to understand and modify
-- Clear separation of concerns
-- Simple error handling with helpful messages
+- Pastikan `OUTPUT_DIR` writable
+- Check disk space
+- Pastikan dependencies terinstall (`docx`, `exceljs`)
 
-### 📚 **Educational Value**
+## ✅ Checklist Setup
 
-- Generates multiple question types
-- Covers different comprehension levels
-- Perfect for creating study materials
+- [ ] Node.js 20.9.0+ terinstall
+- [ ] Dependencies terinstall (`npm install`)
+- [ ] Environment variables di-set (`.env`)
+- [ ] Qdrant berjalan (Docker atau Cloud)
+- [ ] OpenAI API key valid
+- [ ] Test upload document
+- [ ] Test search document
+- [ ] Test generate Word document
+- [ ] Test generate Excel spreadsheet
 
-## 🚀 Broader Applications
+## 🎯 Next Steps
 
-This token limit protection pattern can be applied to many other scenarios:
+1. **Upload Compliance Documents**: Upload policies, procedures, checklists
+2. **Test Search**: Cari dokumen menggunakan semantic search
+3. **Generate Reports**: Buat laporan compliance menggunakan Word/Excel
+4. **Use Compliance Tools**: Gunakan checklist, gap analysis, dll
+5. **Integrate with WhatsApp**: Siap untuk integrasi WhatsApp (next phase)
 
-### Document Processing
+## 📞 Support
 
-- **Legal documents**: Summarize contracts before analysis
-- **Research papers**: Extract key findings before comparison
-- **Technical manuals**: Create focused summaries for specific topics
+Untuk pertanyaan atau bantuan:
+- **Dibuat oleh**: PT Duta Teknologi Kreatif
+- **Agent**: DTK AI
 
-### Content Analysis
+---
 
-- **Social media**: Summarize large thread conversations
-- **Customer feedback**: Compress reviews before sentiment analysis
-- **Meeting transcripts**: Extract action items and decisions
-
-### Data Processing
-
-- **Log analysis**: Summarize error patterns before classification
-- **Survey responses**: Compress feedback before theme extraction
-- **Code reviews**: Summarize changes before generating reports
-
-### Implementation Tips
-
-- Use **OpenAI GPT-4.1 Mini** for initial summarization (large context window)
-- Pass **summaries** to downstream tools, not raw data
-- **Chain summaries** for multi-step processing
-- **Preserve metadata** (file size, page count) for context
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+**DTK AI** - ISO 27001 & PCI DSS Compliance Assistant  
+**Version**: 1.0.0  
+**Last Updated**: 2024
