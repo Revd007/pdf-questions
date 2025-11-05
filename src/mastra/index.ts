@@ -5,6 +5,7 @@ import { pdfToQuestionsWorkflow } from './workflows/generate-questions-from-pdf-
 import { textQuestionAgent } from './agents/text-question-agent';
 import { pdfQuestionAgent } from './agents/pdf-question-agent';
 import { pdfSummarizationAgent } from './agents/pdf-summarization-agent';
+import { dtkAiAgent } from './agents/dtk-ai-agent';
 
 export const mastra = new Mastra({
   workflows: { pdfToQuestionsWorkflow },
@@ -12,6 +13,7 @@ export const mastra = new Mastra({
     textQuestionAgent,
     pdfQuestionAgent,
     pdfSummarizationAgent,
+    dtkAiAgent,
   },
   storage: new LibSQLStore({
     // stores telemetry, evals, ... into memory storage, if it needs to persist, change to file:../mastra.db
