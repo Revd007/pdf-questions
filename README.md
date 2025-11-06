@@ -38,9 +38,13 @@ AI Assistant yang dibuat oleh PT Duta Teknologi Kreatif untuk membantu persiapan
 
 ### 1. Prerequisites
 
-- Node.js 20.9.0 atau lebih tinggi
+- **Node.js 20.9.0 - 20.x LTS** (Recommended - lihat [Node.js Compatibility Fix](./NODEJS_COMPATIBILITY_FIX.md) jika menggunakan Node.js 22.x)
 - Docker (untuk Qdrant Vector Database)
-- OpenAI API Key
+- **API Key** - OpenAI atau Google Gemini (lihat [Model Provider Configuration](./MODEL_PROVIDER_CONFIG.md))
+
+⚠️ **Catatan Penting**: 
+- Jika menggunakan Node.js 22.x dan mengalami error saat menjalankan build, silakan downgrade ke Node.js 20.x LTS atau gunakan development mode (`npm run dev`)
+- Anda bisa menggunakan OpenAI atau Gemini sebagai model provider. Setidaknya satu API key harus diset.
 
 ### 2. Installation
 
@@ -84,12 +88,24 @@ npm run test:dtk-ai
 
 Lihat `.env.example` untuk semua environment variables yang diperlukan:
 
-- `OPENAI_API_KEY` - **Required**: OpenAI API key
+**Model Provider (Required - pilih salah satu):**
+- `OPENAI_API_KEY` - OpenAI API key (default)
+- `GEMINI_API_KEY` - Google Gemini API key (alternative)
+
+**Model Configuration (Optional):**
+- `MODEL_PROVIDER` - Provider: `openai` atau `gemini` (default: `openai`)
+- `MODEL_NAME` - Nama model (default: `gpt-4o` untuk OpenAI, `gemini-1.5-pro` untuk Gemini)
+- `EMBEDDING_PROVIDER` - Provider untuk embeddings (default: same as `MODEL_PROVIDER`)
+- `EMBEDDING_MODEL` - Model untuk embeddings
+
+**Database & Services:**
 - `QDRANT_URL` - Default: `http://localhost:6333`
 - `QDRANT_API_KEY` - Optional: Untuk Qdrant Cloud
 - `MASTRA_DB_URL` - Default: `file:./mastra.db`
 - `OUTPUT_DIR` - Default: `./outputs`
 - `UPLOAD_DIR` - Default: `./uploads`
+
+Lihat [Model Provider Configuration](./MODEL_PROVIDER_CONFIG.md) untuk detail lengkap tentang konfigurasi model provider.
 
 ## 💡 Usage Examples
 
@@ -271,11 +287,28 @@ export const dtkMcpClient = new MCPClient({
 
 ## 📖 Documentation
 
+- [PT Duta Teknologi Kreatif - Identitas Perusahaan & Produk](./DTK_COMPANY_IDENTITY.md)
+- [Model Provider Configuration](./MODEL_PROVIDER_CONFIG.md) - Konfigurasi OpenAI & Gemini
+- [Gemini Compatibility Fix](./GEMINI_COMPATIBILITY_FIX.md) - Fix untuk Gemini API tool schema compatibility
+- [Node.js Compatibility Fix](./NODEJS_COMPATIBILITY_FIX.md) - Troubleshooting untuk error Node.js 22.x
 - [Enhanced RAG & Word Generation](./ENHANCED_RAG_AND_WORD_GENERATION.md)
 - [MCP & Excel Support](./MCP_AND_EXCEL_SUPPORT.md)
 - [Complete Features Guide](./COMPLETE_FEATURES_GUIDE.md)
 
 ## 🐛 Troubleshooting
+
+### Node.js Compatibility Error
+
+Jika Anda mendapatkan error:
+```
+TypeError [ERR_INVALID_ARG_TYPE]: The "superCtor" argument must be of type function
+```
+
+Lihat [Node.js Compatibility Fix](./NODEJS_COMPATIBILITY_FIX.md) untuk solusi lengkap.
+
+**Quick Fix**: 
+- Downgrade ke Node.js 20.x LTS (recommended)
+- Atau gunakan development mode: `npm run dev`
 
 ### Qdrant Connection Error
 
@@ -312,9 +345,9 @@ curl http://localhost:6333/health
 
 - [ ] Node.js 20.9.0+ terinstall
 - [ ] Dependencies terinstall (`npm install`)
-- [ ] Environment variables di-set (`.env`)
+- [ ] Environment variables di-set (`.env`) - **OPENAI_API_KEY atau GEMINI_API_KEY**
 - [ ] Qdrant berjalan (Docker atau Cloud)
-- [ ] OpenAI API key valid
+- [ ] API key valid (OpenAI atau Gemini)
 - [ ] Test upload document
 - [ ] Test search document
 - [ ] Test generate Word document
@@ -333,6 +366,10 @@ curl http://localhost:6333/health
 Untuk pertanyaan atau bantuan:
 - **Dibuat oleh**: PT Duta Teknologi Kreatif
 - **Agent**: DTK AI
+- **Website Perusahaan**: 
+  - [Company Website](https://www.dutateknologikreatif.co.id/)
+  - [DutaPay](https://www.dutapay.co.id/)
+  - [DutaMoney](https://www.dutamoney.co.id/)
 
 ---
 

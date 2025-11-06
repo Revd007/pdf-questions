@@ -2,16 +2,36 @@ import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
+import { createRequire } from 'module';
 
 // Dynamic import untuk pdf2json agar tidak di-bundle (menghindari CommonJS issues)
 // pdf2json menggunakan util.inherits yang tidak kompatibel dengan ES modules saat bundling
+// Menggunakan createRequire untuk runtime loading yang benar-benar tidak di-bundle
 let PDFParser: any = null;
+let pdf2jsonLoaded = false;
 
 async function getPDFParser() {
-  if (!PDFParser) {
-    // @ts-ignore - Dynamic import untuk menghindari bundling issues
-    const pdf2jsonModule = await import('pdf2json');
-    PDFParser = pdf2jsonModule.default || pdf2jsonModule;
+  if (!PDFParser && !pdf2jsonLoaded) {
+    pdf2jsonLoaded = true;
+    try {
+      // Use createRequire untuk runtime require yang tidak di-bundle
+      // String literal dengan variable untuk menghindari static analysis
+      const requireModule = createRequire(import.meta.url);
+      const pdf2jsonPath = 'pdf2json';
+      PDFParser = requireModule(pdf2jsonPath);
+      // Handle both default export and named export
+      PDFParser = PDFParser.default || PDFParser || PDFParser.PDFParser;
+    } catch (error) {
+      // Fallback: try dynamic import sebagai last resort
+      try {
+        // @ts-ignore
+        const pdf2jsonModule: any = await import('pdf2json');
+        PDFParser = pdf2jsonModule.default || pdf2jsonModule || (pdf2jsonModule as any).PDFParser;
+      } catch (importError) {
+        console.error('Failed to load pdf2json:', error);
+        throw new Error('PDF parsing library (pdf2json) is not available. Please ensure pdf2json is installed.');
+      }
+    }
   }
   return PDFParser;
 }
@@ -24,8 +44,12 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<{ extracted
 
   console.log('🔍 Extracting text from PDF...');
 
-  // Dynamic import PDFParser saat runtime
+  // Dynamic import PDFParser saat runtime menggunakan createRequire
   const PDFParserClass = await getPDFParser();
+  
+  if (!PDFParserClass) {
+    throw new Error('PDFParser class not available. pdf2json may not be properly installed.');
+  }
 
   return new Promise((resolve, reject) => {
     const pdfParser = new PDFParserClass();

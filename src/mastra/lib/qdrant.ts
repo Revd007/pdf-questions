@@ -1,12 +1,18 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { embedMany } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { getEmbeddingModel, getEmbeddingProviderName } from './model-provider';
 
 const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
 const QDRANT_API_KEY = process.env.QDRANT_API_KEY || undefined;
 const COLLECTION_NAME = 'dtk_ai_documents';
-const EMBEDDING_MODEL = 'text-embedding-3-small';
+const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || undefined; // Will use default from provider
 const SIMILARITY_THRESHOLD = 0.7;
+
+// Get embedding dimension based on provider
+function getEmbeddingDimension(): number {
+  const provider = getEmbeddingProviderName();
+  return provider === 'gemini' ? 768 : 1536; // Gemini text-embedding-004: 768, OpenAI text-embedding-3-small: 1536
+}
 
 // Initialize Qdrant client
 export const qdrantClient = new QdrantClient({
@@ -37,7 +43,7 @@ export function chunkText(text: string, chunkSize: number = 1000, overlap: numbe
  * Create embeddings for text chunks
  */
 export async function createEmbeddings(texts: string[]): Promise<number[][]> {
-  const embeddingModel = openai.embedding(EMBEDDING_MODEL);
+  const embeddingModel = getEmbeddingModel(EMBEDDING_MODEL);
   const result = await embedMany({
     model: embeddingModel,
     values: texts,
@@ -57,13 +63,14 @@ export async function ensureCollection(): Promise<void> {
     );
 
     if (!collectionExists) {
+      const embeddingSize = getEmbeddingDimension();
       await qdrantClient.createCollection(COLLECTION_NAME, {
         vectors: {
-          size: 1536, // text-embedding-3-small dimension
+          size: embeddingSize,
           distance: 'Cosine',
         },
       });
-      console.log(`✅ Created Qdrant collection: ${COLLECTION_NAME}`);
+      console.log(`✅ Created Qdrant collection: ${COLLECTION_NAME} with ${embeddingSize}D embeddings (provider: ${getEmbeddingProviderName()})`);
     }
   } catch (error) {
     console.error('❌ Error ensuring collection:', error);

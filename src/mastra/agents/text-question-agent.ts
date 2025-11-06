@@ -1,5 +1,5 @@
 import { Agent } from '@mastra/core/agent';
-import { openai } from '@ai-sdk/openai';
+import { getLanguageModel } from '../lib/model-provider';
 
 export const textQuestionAgent = new Agent({
   name: 'Generate questions from text agent',
@@ -62,5 +62,5 @@ Guidelines:
 
 The questions should help someone thoroughly understand and engage with the source material.
   `,
-  model: openai('gpt-4o'),
+  model: getLanguageModel(),
 });

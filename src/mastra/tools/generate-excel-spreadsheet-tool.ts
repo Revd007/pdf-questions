@@ -25,7 +25,7 @@ export const generateExcelSpreadsheetTool = createTool({
       z.object({
         name: z.string().describe('Nama sheet'),
         headers: z.array(z.string()).describe('Header kolom untuk sheet ini'),
-        rows: z.array(z.array(z.union([z.string(), z.number(), z.boolean()]))).describe('Data rows untuk sheet ini'),
+        rows: z.array(z.array(z.any())).describe('Data rows untuk sheet ini. Setiap cell bisa berupa string, number, atau boolean. Akan dikonversi otomatis saat menulis ke Excel.'),
         autoFilter: z.boolean().optional().default(true).describe('Enable auto-filter untuk headers'),
         columnWidths: z.array(z.number()).optional().describe('Width untuk setiap kolom (opsional)'),
       })
@@ -76,7 +76,19 @@ export const generateExcelSpreadsheetTool = createTool({
 
         // Add data rows
         for (const rowData of sheetConfig.rows) {
-          worksheet.addRow(rowData);
+          // Convert row data to proper types (handle any type coercion)
+          const processedRow = rowData.map(cell => {
+            if (cell === null || cell === undefined) {
+              return '';
+            }
+            // Keep original type if it's already string, number, or boolean
+            if (typeof cell === 'string' || typeof cell === 'number' || typeof cell === 'boolean') {
+              return cell;
+            }
+            // Convert other types to string
+            return String(cell);
+          });
+          worksheet.addRow(processedRow);
         }
 
         // Enable auto-filter if requested

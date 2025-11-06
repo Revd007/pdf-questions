@@ -1,5 +1,5 @@
-import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
+import { getLanguageModel } from '../lib/model-provider';
 
 export const pdfSummarizationAgent = new Agent({
   name: 'PDF Summarization Agent',
@@ -79,5 +79,5 @@ Format your summaries with:
 
 Always provide summaries that would allow someone to understand the document's core value without reading the full text.
   `,
-  model: openai('gpt-4.1-mini'), // Large context window model for summarization
+  model: getLanguageModel(process.env.SUMMARIZATION_MODEL_NAME || 'gpt-4o-mini'), // Large context window model for summarization
 });

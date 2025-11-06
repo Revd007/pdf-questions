@@ -1,7 +1,7 @@
-import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 import { pdfFetcherTool } from '../tools/download-pdf-tool';
 import { generateQuestionsFromTextTool } from '../tools/generate-questions-from-text-tool';
+import { getLanguageModel } from '../lib/model-provider';
 
 export const pdfQuestionAgent = new Agent({
   name: 'Generate questions from PDF agent',
@@ -53,7 +53,7 @@ When successful, provide:
 
 Always be helpful and provide clear feedback about the process and results.
   `,
-  model: openai('gpt-4o'),
+  model: getLanguageModel(),
   tools: {
     pdfFetcherTool,
     generateQuestionsFromTextTool,
