@@ -55,18 +55,38 @@ export const analyzeHardeningChecklistTool = createTool({
       let filePath = path.normalize(rawFilePath);
       let finalFilePath: string | null = null;
 
+      // Get root project directory (go up from .mastra/output if we're in bundled output)
+      const cwd = process.cwd();
+      const isInMastraOutput = cwd.includes('.mastra');
+      const projectRoot = isInMastraOutput 
+        ? path.resolve(cwd, '..', '..') // Go up from .mastra/output to project root
+        : cwd;
+
+      // Get upload directory from env or use default
+      const uploadDir = process.env.UPLOAD_DIR || './uploads';
+      const uploadsDir = path.isAbsolute(uploadDir) 
+        ? uploadDir 
+        : path.resolve(projectRoot, uploadDir);
+
       // List of possible locations to search
       const possiblePaths = [
         // If already absolute, use as is
         path.isAbsolute(filePath) ? filePath : null,
-        // Try uploads folder first (most common location)
+        // Try uploads folder in project root (most common location)
+        path.resolve(uploadsDir, path.basename(filePath)),
+        // Try uploads folder relative to current working directory
         path.resolve(process.cwd(), 'uploads', path.basename(filePath)),
+        // Try project root uploads
+        path.resolve(projectRoot, 'uploads', path.basename(filePath)),
         // Try current directory
         path.resolve(process.cwd(), filePath),
+        // Try project root directory
+        path.resolve(projectRoot, filePath),
         // Try absolute path if not already absolute
         path.isAbsolute(filePath) ? null : path.resolve(filePath),
         // Try from workspace root
         path.resolve(process.cwd(), '..', filePath),
+        path.resolve(projectRoot, '..', filePath),
       ].filter((p): p is string => p !== null);
 
       // Try each possible path
@@ -79,17 +99,25 @@ export const analyzeHardeningChecklistTool = createTool({
       }
 
       if (!finalFilePath) {
-        // Try to find file by name in uploads directory
-        const uploadsDir = path.resolve(process.cwd(), 'uploads');
-        if (fs.existsSync(uploadsDir)) {
-          const files = fs.readdirSync(uploadsDir);
-          const matchingFile = files.find(f => 
-            f.toLowerCase().includes(path.basename(filePath, path.extname(filePath)).toLowerCase()) ||
-            f.toLowerCase() === filePath.toLowerCase()
-          );
-          if (matchingFile) {
-            finalFilePath = path.join(uploadsDir, matchingFile);
-            console.log(`✅ File ditemukan di uploads: ${finalFilePath}`);
+        // Try to find file by name in uploads directories
+        const uploadDirsToSearch = [
+          uploadsDir,
+          path.resolve(projectRoot, 'uploads'),
+          path.resolve(process.cwd(), 'uploads'),
+        ];
+
+        for (const searchDir of uploadDirsToSearch) {
+          if (fs.existsSync(searchDir)) {
+            const files = fs.readdirSync(searchDir);
+            const matchingFile = files.find(f => 
+              f.toLowerCase().includes(path.basename(filePath, path.extname(filePath)).toLowerCase()) ||
+              f.toLowerCase() === path.basename(filePath).toLowerCase()
+            );
+            if (matchingFile) {
+              finalFilePath = path.join(searchDir, matchingFile);
+              console.log(`✅ File ditemukan di uploads (${searchDir}): ${finalFilePath}`);
+              break;
+            }
           }
         }
 
@@ -98,7 +126,9 @@ export const analyzeHardeningChecklistTool = createTool({
             `File tidak ditemukan: ${rawFilePath}\n` +
             `Tried paths:\n${possiblePaths.map(p => `  - ${p}`).join('\n')}\n` +
             `Current working directory: ${process.cwd()}\n` +
-            `Uploads directory: ${path.resolve(process.cwd(), 'uploads')}`
+            `Project root: ${projectRoot}\n` +
+            `Uploads directory: ${uploadsDir}\n` +
+            `Searched upload directories: ${uploadDirsToSearch.join(', ')}`
           );
         }
       }
