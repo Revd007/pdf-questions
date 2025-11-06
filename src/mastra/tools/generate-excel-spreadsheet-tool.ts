@@ -25,7 +25,9 @@ export const generateExcelSpreadsheetTool = createTool({
       z.object({
         name: z.string().describe('Nama sheet'),
         headers: z.array(z.string()).describe('Header kolom untuk sheet ini'),
-        rows: z.array(z.array(z.any())).describe('Data rows untuk sheet ini. Setiap cell bisa berupa string, number, atau boolean. Akan dikonversi otomatis saat menulis ke Excel.'),
+        rows: z.array(
+          z.array(z.string()).describe('Array of cell values. Setiap cell value akan dikonversi otomatis: string tetap string, number/boolean akan dikonversi ke string saat diperlukan.')
+        ).describe('Data rows untuk sheet ini. Setiap row adalah array of strings. Untuk number atau boolean, kirim sebagai string (contoh: "123" untuk number, "true" untuk boolean).'),
         autoFilter: z.boolean().optional().default(true).describe('Enable auto-filter untuk headers'),
         columnWidths: z.array(z.number()).optional().describe('Width untuk setiap kolom (opsional)'),
       })
@@ -76,15 +78,35 @@ export const generateExcelSpreadsheetTool = createTool({
 
         // Add data rows
         for (const rowData of sheetConfig.rows) {
-          // Convert row data to proper types (handle any type coercion)
+          // Convert row data to proper types (handle string to number/boolean conversion)
           const processedRow = rowData.map(cell => {
-            if (cell === null || cell === undefined) {
+            if (cell === null || cell === undefined || cell === '') {
               return '';
             }
-            // Keep original type if it's already string, number, or boolean
-            if (typeof cell === 'string' || typeof cell === 'number' || typeof cell === 'boolean') {
+            
+            // If it's already a number or boolean, keep it
+            if (typeof cell === 'number' || typeof cell === 'boolean') {
               return cell;
             }
+            
+            // If it's a string, try to convert to number or boolean if possible
+            if (typeof cell === 'string') {
+              // Try to convert to number
+              const numValue = Number(cell);
+              if (!isNaN(numValue) && cell.trim() !== '' && !isNaN(parseFloat(cell))) {
+                // Check if it's an integer or float
+                return Number.isInteger(numValue) ? numValue : parseFloat(cell);
+              }
+              
+              // Try to convert to boolean
+              const lowerCell = cell.toLowerCase().trim();
+              if (lowerCell === 'true') return true;
+              if (lowerCell === 'false') return false;
+              
+              // Otherwise keep as string
+              return cell;
+            }
+            
             // Convert other types to string
             return String(cell);
           });

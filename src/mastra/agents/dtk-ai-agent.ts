@@ -9,9 +9,12 @@ import {
 } from '../tools/compliance-tools';
 import { generateWordDocumentTool } from '../tools/generate-word-document-tool';
 import { generateExcelSpreadsheetTool } from '../tools/generate-excel-spreadsheet-tool';
+import { cisBenchmarkScoringTool } from '../tools/cis-benchmark-tool';
+import { analyzeHardeningChecklistTool } from '../tools/analyze-hardening-checklist-tool';
+import { crawlWebContentTool } from '../tools/crawl-web-content-tool';
 import { dtkMcpClient } from '../mcp/mcp-client';
-import { memoryConfig } from '../lib/memory';
-import { getLanguageModel, getModelProviderName } from '../lib/model-provider';
+import { dtkAiMemory } from '../lib/memory';
+import { getLanguageModel, getModelProviderName, getModelProvider } from '../lib/model-provider';
 // @ts-ignore - Type definitions exist but moduleResolution issue
 import {
   createAnswerRelevancyScorer,
@@ -148,6 +151,9 @@ Anda memiliki akses ke sistem RAG (Retrieval-Augmented Generation) yang terhubun
 7. **Deadline Reminder Tool** - Menampilkan deadline dan timeline penting untuk audit, bisa menambah deadline baru dan check upcoming deadlines
 8. **Gap Analysis Tool** - Melakukan gap analysis untuk mengidentifikasi area yang belum compliant beserta rekomendasi perbaikan
 9. **Audit Preparation Tool** - Menyediakan checklist dan guidance untuk persiapan audit termasuk dokumen yang diperlukan dan action items
+10. **CIS Benchmark Scoring Tool** - Tool canggih untuk melakukan scoring dan analisis hardening berdasarkan CIS Benchmark. Membandingkan konfigurasi aktual dengan rekomendasi CIS Benchmark, memberikan skor compliance (0-100), identifikasi temuan kritis, dan rekomendasi perbaikan prioritas. Ideal untuk analisis hardening Windows Server (2016, 2019, 2022). Tool ini memberikan analisis detail dengan kategori kontrol, severity, dan priority actions.
+11. **Analyze Hardening Checklist Tool** - Tool COMPREHENSIVE untuk menganalisis dokumen hardening checklist (PDF/DOCX) secara LENGKAP. Tool ini membaca SELURUH konten file, mengekstrak SEMUA data konfigurasi keamanan, menggunakan MCP untuk mencari CIS Benchmark terbaru, melakukan scoring lengkap, dan menghasilkan analisis comprehensive yang detail. Tool TERBAIK untuk analisis hardening checklist yang lengkap dan mendalam.
+12. **Crawl Web Content Tool** - Tool untuk crawling data dari website, kemudian otomatis melakukan chunking, convert ke vector embeddings, dan menyimpan ke Qdrant Vector Database. Mengikuti alur lengkap: Crawling → Chunking → Vector Conversion → Vector Database Storage → RAG Integration. Ideal untuk mengindeks konten web ke dalam sistem RAG.
 
 **🔍 METODE KERJA**
 
@@ -167,6 +173,8 @@ Ketika pengguna meminta file, informasi, atau bantuan compliance:
    - Untuk deadline dan timeline → gunakan Deadline Reminder Tool
    - Untuk analisis gaps → gunakan Gap Analysis Tool
    - Untuk persiapan audit → gunakan Audit Preparation Tool
+   - Untuk scoring hardening berdasarkan CIS Benchmark → gunakan CIS Benchmark Scoring Tool (tool terbaik untuk analisis hardening compliance)
+   - Untuk analisis LENGKAP hardening checklist PDF/DOCX → gunakan Analyze Hardening Checklist Tool (tool TERBAIK yang membaca SELURUH file, mengekstrak SEMUA konfigurasi, menggunakan MCP untuk data terbaru, dan menghasilkan analisis comprehensive yang detail)
    - Untuk pencarian dokumen → gunakan Search Document Tool (otomatis memastikan collection ada)
    - Untuk tools dari MCP servers → gunakan MCP tools yang tersedia
 
@@ -315,6 +323,7 @@ Ketika pengguna meminta membuat dokumen Word atau Excel (misalnya: laporan harde
    - Untuk gap analysis → buat spreadsheet dengan columns: Control, Status, Gap, Recommendation, Priority
    - Untuk audit findings → buat spreadsheet dengan columns: Finding, Severity, Recommendation, Status
    - Untuk risk assessment → buat spreadsheet dengan columns: Risk, Likelihood, Impact, Risk Score, Mitigation
+   - Untuk CIS Benchmark scoring → gunakan CIS Benchmark Scoring Tool terlebih dahulu untuk mendapatkan data scoring, lalu buat spreadsheet dengan columns: Category, Control ID, Control Name, Current Value, Recommended Value, Status, Severity, Recommendation
 
 2. **Gunakan Generate Excel Spreadsheet Tool**:
    - fileName: Nama file Excel (contoh: "CIS_Benchmark_Windows_Server_2016.xlsx")
@@ -362,23 +371,41 @@ Selalu bersikap profesional, membantu, dan edukatif dalam setiap interaksi.
     deadlineReminderTool,
     gapAnalysisTool,
     auditPreparationTool,
+    cisBenchmarkScoringTool, // CIS Benchmark scoring tool untuk analisis hardening
+    analyzeHardeningChecklistTool, // Tool comprehensive untuk analisis lengkap hardening checklist PDF/DOCX
+    crawlWebContentTool, // Tool untuk crawling data dari web, chunking, convert ke vector, dan simpan ke Vector Database
     // MCP tools akan ditambahkan secara dinamis jika tersedia
     ...(mcpToolsCache || {}),
   },
-  // Memory akan menggunakan storage dari Mastra instance secara otomatis
-  // Memory configuration dapat di-set melalui memory option jika diperlukan
+  // Memory configuration - Agent akan mengingat konteks percakapan
+  // Memory akan menggunakan shared storage dari Mastra instance (LibSQLStore)
+  // yang sudah dikonfigurasi di src/mastra/index.ts
+  // Lihat dokumentasi: https://mastra.ai/docs/agents/agent-memory
+  memory: dtkAiMemory,
   scorers: {
     // Answer Relevancy: Evaluasi apakah jawaban relevan dengan pertanyaan
     relevancy: {
       scorer: createAnswerRelevancyScorer({ 
-        model: getLanguageModel(process.env.SCORER_MODEL_NAME || 'gpt-4o-mini') 
+        // Gunakan model sesuai provider aktif (OpenAI atau Gemini)
+        // Default: gpt-4o-mini untuk OpenAI, gemini-1.5-flash untuk Gemini
+        model: (() => {
+          const provider = getModelProvider();
+          const defaultScorerModel = provider === 'gemini' ? 'gemini-2.5-pro' : 'gpt-4o-mini';
+          return getLanguageModel(process.env.SCORER_MODEL_NAME || defaultScorerModel);
+        })()
       }),
       sampling: { type: 'ratio', rate: 0.3 }, // Score 30% dari responses
     },
     // Toxicity: Cek apakah ada konten yang tidak pantas atau berbahaya
     safety: {
       scorer: createToxicityScorer({ 
-        model: getLanguageModel(process.env.SCORER_MODEL_NAME || 'gpt-4o-mini') 
+        // Gunakan model sesuai provider aktif (OpenAI atau Gemini)
+        // Default: gpt-4o-mini untuk OpenAI, gemini-1.5-flash untuk Gemini
+        model: (() => {
+          const provider = getModelProvider();
+          const defaultScorerModel = provider === 'gemini' ? 'gemini-2.5-pro' : 'gpt-4o-mini';
+          return getLanguageModel(process.env.SCORER_MODEL_NAME || defaultScorerModel);
+        })()
       }),
       sampling: { type: 'ratio', rate: 1.0 }, // Score semua responses untuk safety
     },

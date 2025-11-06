@@ -2,6 +2,7 @@ import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
+import * as path from 'path';
 import { createRequire } from 'module';
 
 // Dynamic import untuk pdf2json agar tidak di-bundle (menghindari CommonJS issues)
@@ -276,24 +277,33 @@ export async function extractTextFromTXT(filePath: string): Promise<{ extractedT
  * Auto-detect file type and extract text
  */
 export async function extractTextFromFile(filePath: string, fileType?: string): Promise<{ extractedText: string; pagesCount: number }> {
-  const extension = fileType || filePath.split('.').pop()?.toLowerCase();
+  // Normalize path
+  const normalizedPath = path.normalize(filePath);
+  
+  // Check if file exists
+  if (!fs.existsSync(normalizedPath)) {
+    throw new Error(`File tidak ditemukan: ${normalizedPath}`);
+  }
+
+  const extension = fileType || path.extname(normalizedPath).slice(1).toLowerCase();
 
   switch (extension) {
     case 'pdf':
-      const pdfBuffer = fs.readFileSync(filePath);
+      console.log(`📄 Reading PDF file: ${normalizedPath}`);
+      const pdfBuffer = fs.readFileSync(normalizedPath);
       return await extractTextFromPDF(pdfBuffer);
     
     case 'docx':
-      return await extractTextFromDOCX(filePath);
+      return await extractTextFromDOCX(normalizedPath);
     
     case 'xlsx':
-      return await extractTextFromXLSX(filePath);
+      return await extractTextFromXLSX(normalizedPath);
     
     case 'csv':
-      return await extractTextFromCSV(filePath);
+      return await extractTextFromCSV(normalizedPath);
     
     case 'txt':
-      return await extractTextFromTXT(filePath);
+      return await extractTextFromTXT(normalizedPath);
     
     default:
       throw new Error(`File type not supported: ${extension}. Supported types: pdf, docx, xlsx, csv, txt`);

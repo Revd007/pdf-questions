@@ -37,13 +37,58 @@ export const uploadDocumentTool = createTool({
     message: z.string().describe('Pesan konfirmasi upload'),
   }),
   execute: async ({ context }) => {
-    const { filePath, fileName: providedFileName, fileType } = context;
+    const { filePath: rawFilePath, fileName: providedFileName, fileType } = context;
 
     try {
-      // Validasi file exists
-      if (!fs.existsSync(filePath)) {
-        throw new Error(`File tidak ditemukan: ${filePath}`);
+      // Normalize path untuk Windows (handle backslashes dan forward slashes)
+      // Path.normalize akan handle backslashes dengan benar di Windows
+      let filePath = path.normalize(rawFilePath);
+      
+      // Jika path sudah absolute (dimulai dengan drive letter di Windows), gunakan langsung
+      // Jika relative, resolve dari current working directory
+      if (!path.isAbsolute(filePath)) {
+        filePath = path.resolve(process.cwd(), filePath);
       }
+      
+      console.log(`📁 Mencoba membaca file dari: ${filePath}`);
+      
+      // Validasi file exists dengan error yang lebih informatif
+      let finalFilePath = filePath;
+      if (!fs.existsSync(filePath)) {
+        // Coba dengan path absolut jika relative
+        const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
+        if (fs.existsSync(absolutePath)) {
+          finalFilePath = absolutePath;
+          console.log(`✅ File ditemukan di absolute path: ${finalFilePath}`);
+        } else {
+          // Coba resolve dari workspace root
+          const workspacePath = path.resolve(filePath);
+          if (fs.existsSync(workspacePath)) {
+            finalFilePath = workspacePath;
+            console.log(`✅ File ditemukan di workspace path: ${finalFilePath}`);
+          } else {
+            throw new Error(
+              `File tidak ditemukan: ${rawFilePath}\n` +
+              `Tried paths:\n` +
+              `  - Original: ${rawFilePath}\n` +
+              `  - Normalized: ${filePath}\n` +
+              `  - Absolute: ${absolutePath}\n` +
+              `  - Workspace: ${workspacePath}\n` +
+              `Current working directory: ${process.cwd()}`
+            );
+          }
+        }
+      }
+
+      // Check file permissions
+      try {
+        fs.accessSync(finalFilePath, fs.constants.R_OK);
+      } catch (accessError) {
+        throw new Error(`File tidak dapat dibaca (permission denied): ${finalFilePath}`);
+      }
+
+      // Use final file path for all operations
+      filePath = finalFilePath;
 
       const fileName = providedFileName || path.basename(filePath);
       const documentId = randomUUID();
@@ -53,6 +98,11 @@ export const uploadDocumentTool = createTool({
       const fileExtension = path.extname(fileName);
       const storedFileName = `${documentId}${fileExtension}`;
       const storedFilePath = path.join(UPLOAD_DIR, storedFileName);
+      
+      // Ensure upload directory exists
+      if (!fs.existsSync(UPLOAD_DIR)) {
+        fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+      }
       
       fs.copyFileSync(filePath, storedFilePath);
       console.log(`✅ File disalin ke: ${storedFilePath}`);
@@ -81,6 +131,7 @@ export const uploadDocumentTool = createTool({
       console.log(`📄 Memproses file tipe: ${detectedFileType.toUpperCase()}`);
 
       // Extract text berdasarkan tipe file menggunakan fungsi unified
+      console.log(`🔍 Mengekstrak teks dari file: ${filePath}`);
       const extractionResult = await extractTextFromFile(filePath, detectedFileType);
       const extractedText = extractionResult.extractedText;
       const pagesCount = extractionResult.pagesCount;

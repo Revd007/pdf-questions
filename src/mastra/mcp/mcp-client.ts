@@ -14,6 +14,13 @@ export const dtkMcpClient = new MCPClient({
       command: 'npx',
       args: ['-y', '@mastra/mcp-docs-server'],
     },
+    // CIS Benchmark MCP Server - untuk data CIS Benchmark yang up-to-date
+    // Note: Server ini bisa di-deploy sebagai standalone atau diintegrasikan dengan external API
+    // Untuk sekarang, menggunakan tool langsung (cisBenchmarkScoringTool)
+    // cisBenchmark: {
+    //   command: 'node',
+    //   args: ['src/mastra/mcp/cis-benchmark-server.ts'],
+    // },
     // Bisa ditambahkan MCP servers lain sesuai kebutuhan
     // Contoh: Wikipedia, Weather Service, dll
   },
